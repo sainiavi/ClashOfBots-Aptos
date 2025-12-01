@@ -1,0 +1,11 @@
+[package]
+name = "clash_of_bots"
+version = "0.1.0"
+authors = ["Clash of Bots"]
+
+[addresses]
+clashofbots = "0xc0b"
+aptos_framework = "0x1"
+
+[dependencies]
+AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework", rev = "aptos-framework-v1.10.0" }

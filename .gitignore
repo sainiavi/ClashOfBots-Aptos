@@ -1,0 +1,10 @@
+# Build artifacts
+/build
+/.aptos
+
+# Local tooling and scripts (kept out of VCS for cleanliness)
+/scripts/
+
+# Misc
+*.log
+.DS_Store
