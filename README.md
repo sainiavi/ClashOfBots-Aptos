@@ -3,19 +3,19 @@
 Move modules implementing the Clash of Bots on-chain logic for Aptos. UI and backend remain unchanged; this package contains only on-chain storage, minting, battle, liquidity, and leaderboard logic per the spec.
 
 ## Features (POC → MVP)
-- Fixed-price mint (10 APT) with deterministic base traits (aggression, defense, adaptability, confidence, optional speed) stored on-chain.
+- Fixed-price mint (10 units of a chosen coin, e.g. USDT) with deterministic base traits (aggression, defense, adaptability, confidence, optional speed) stored on-chain.
 - Deterministic battle engine (no randomness in results) with strategy bonus; 5% liquidity transfer from loser to winner.
 - Trait evolution: +1 confidence to winner, +1 adaptability to loser; optional post-battle randomness for extra confidence and rare event emission (1–3%).
 - Rolling on-chain battle history (last 10 entries) including tx hash.
-- Value helper: `liquidity + wins * WIN_BONUS_PER_WIN` (0.1 APT per win).
+- Value helper: `liquidity + wins * WIN_BONUS_PER_WIN` (0.1 units of the chosen coin per win).
 - Leaderboards: top 5 by wins or liquidity; battle counters per bot.
 
 ## Repository layout
 - `Move.toml` — package definition; named address `clashofbots`.
 - `sources/`
   - `storage.move` — core structs, registry, history buffer, rare event handle, constants.
-  - `liquidity.move` — APT vault and deterministic redistribution helper.
-  - `mint.move` — `entry fun mint_bot` (locks 10 APT, refunds excess, deterministic traits).
+  - `liquidity.move` — token vault (e.g. USDT) and deterministic redistribution helper.
+  - `mint.move` — `entry fun mint_bot` (locks fixed-price payment in the chosen coin, refunds excess, deterministic traits).
   - `battle_engine.move` — `entry fun battle` (deterministic scoring, liquidity move, evolution, history).
   - `randomness.move` — bounded randomness for post-battle evolution only.
   - `leaderboard.move` — top-5 queries by wins/liquidity.
@@ -54,22 +54,23 @@ aptos move run \
   --profile default \
   --function 0xYOURADDR::storage::init_module
 ```
-2) Create liquidity vault:
+2) Create liquidity vault for the coin type you want to use (e.g. USDT). This function is generic; you must pass the coin type:
 ```
 aptos move run \
   --function-address 0xYOURADDR \
   --profile default \
-  --function 0xYOURADDR::liquidity::init_module
+  --function 0xYOURADDR::liquidity::init_module<0xUSDTADDR::usdt::USDT>
 ```
 
 ## Entry functions for users
-- Mint: `0xYOURADDR::mint::mint_bot(payment: Coin<AptosCoin>)` — requires 10 APT; derives traits deterministically.
+- Mint (generic over coin type; intended for USDT):\
+  `0xYOURADDR::mint::mint_bot<0xUSDTADDR::usdt::USDT>(payment: Coin<0xUSDTADDR::usdt::USDT>)` — requires `MINT_PRICE` units of USDT; derives traits deterministically.
 - Battle: `0xYOURADDR::battle_engine::battle(attacker_bot_id, defender_bot_id)` — called by attacker owner.
 
 Key constants (in `storage`):
-- `MINT_PRICE = 1_000_000_000` (10 APT in Octas)
+- `MINT_PRICE = 1_000_000_000` (example value; interpreted as 10 units of the chosen coin in its base units, adjust based on the coin’s decimals)
 - `LIQUIDITY_TRANSFER_PERCENT = 5`
-- `WIN_BONUS_PER_WIN = 10_000_000` (0.1 APT)
+- `WIN_BONUS_PER_WIN = 10_000_000` (0.1 unit of the chosen coin)
 - History depth: 10 records
 
 ## Deterministic battle math
@@ -84,7 +85,7 @@ Key constants (in `storage`):
 - `storage::battle_history()` — latest 10 battles (attacker, defender, winner, tx hash).
 - `leaderboard::top_by_wins()` / `leaderboard::top_by_liquidity()` — top 5 bot ids.
 - `storage::bots_for_owner(address)` — ids owned by address.
-- `storage::bot_value(bot)` — APT value helper.
+- `storage::bot_value(bot)` — value helper expressed in units of the chosen coin (e.g. USDT).
 
 ## Testing locally
 ```

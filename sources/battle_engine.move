@@ -8,9 +8,8 @@ module clashofbots::battle_engine {
     const E_TARGET_NOT_FOUND: u64 = 41;
 
     /// Execute a deterministic 1v1 battle between two bots.
-    public entry fun battle(attacker: &signer, attacker_bot_id: u64, defender_bot_id: u64) acquires storage::Registry, storage::History, storage::Events, liquidity::LiquidityPool {
+    public entry fun battle(attacker: &signer, attacker_bot_id: u64, defender_bot_id: u64) acquires storage::Registry, storage::History, storage::Events {
         storage::assert_initialized();
-        liquidity::assert_initialized();
         assert!(attacker_bot_id != defender_bot_id, E_SAME_BOT);
 
         let caller = signer::address_of(attacker);

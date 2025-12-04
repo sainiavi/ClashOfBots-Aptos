@@ -1,5 +1,4 @@
 module clashofbots::mint {
-    use aptos_framework::aptos_coin::AptosCoin;
     use aptos_framework::coin::{Self as CoinMod, Coin};
     use aptos_framework::signer;
     use aptos_std::bcs;
@@ -8,18 +7,19 @@ module clashofbots::mint {
 
     const E_PAYMENT_TOO_SMALL: u64 = 30;
 
-    /// Mint a new bot with deterministic base traits. Payment must be exactly 10 APT.
-    public entry fun mint_bot(account: &signer, mut payment: Coin<AptosCoin>) acquires storage::Registry, liquidity::LiquidityPool {
+    /// Mint a new bot with deterministic base traits.
+    /// Payment must be exactly the configured price in the chosen coin (e.g. 10 USDT).
+    public entry fun mint_bot<CoinType>(account: &signer, mut payment: Coin<CoinType>) acquires storage::Registry, liquidity::LiquidityPool<CoinType> {
         storage::assert_initialized();
-        liquidity::assert_initialized();
+        liquidity::assert_initialized<CoinType>();
 
         let price = storage::MINT_PRICE;
         let paid = CoinMod::value(&payment);
         assert!(paid >= price, E_PAYMENT_TOO_SMALL);
 
         let locked = CoinMod::split(&mut payment, price);
-        liquidity::lock(locked);
-        refund_if_needed(account, payment);
+        liquidity::lock<CoinType>(locked);
+        refund_if_needed<CoinType>(account, payment);
 
         let owner = signer::address_of(account);
         let next_id = storage::preview_next_id();
@@ -41,7 +41,7 @@ module clashofbots::mint {
         );
     }
 
-    fun refund_if_needed(account: &signer, leftover: Coin<AptosCoin>) {
+    fun refund_if_needed<CoinType>(account: &signer, leftover: Coin<CoinType>) {
         if (CoinMod::value(&leftover) == 0) {
             CoinMod::destroy_zero(leftover);
         } else {

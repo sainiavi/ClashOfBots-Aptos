@@ -13,9 +13,9 @@ module clashofbots::storage {
     /// Maximum number of battle records kept on-chain.
     const MAX_HISTORY: u64 = 10;
 
-    /// Price to mint a bot: 10 APT (10 * 10^8 Octas).
+    /// Price to mint a bot: 10 units of the chosen coin (e.g. 10 USDT in its base units).
     public const MINT_PRICE: u64 = 1_000_000_000;
-    /// Bonus added to the displayed value per win (0.1 APT).
+    /// Bonus added to the displayed value per win (0.1 units of the chosen coin).
     public const WIN_BONUS_PER_WIN: u64 = 10_000_000;
     /// Percent of loser liquidity transferred to winner on victory.
     public const LIQUIDITY_TRANSFER_PERCENT: u64 = 5;
